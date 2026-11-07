@@ -1,0 +1,14 @@
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\bin\Debug\net8.0-windows\PuzzleGame.exe
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\bin\Debug\net8.0-windows\PuzzleGame.deps.json
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\bin\Debug\net8.0-windows\PuzzleGame.runtimeconfig.json
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\bin\Debug\net8.0-windows\PuzzleGame.dll
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\bin\Debug\net8.0-windows\PuzzleGame.pdb
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\obj\Debug\net8.0-windows\PuzzleGame.GeneratedMSBuildEditorConfig.editorconfig
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\obj\Debug\net8.0-windows\PuzzleGame.AssemblyInfoInputs.cache
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\obj\Debug\net8.0-windows\PuzzleGame.AssemblyInfo.cs
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\obj\Debug\net8.0-windows\PuzzleGame.csproj.CoreCompileInputs.cache
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\obj\Debug\net8.0-windows\PuzzleGame.dll
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\obj\Debug\net8.0-windows\refint\PuzzleGame.dll
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\obj\Debug\net8.0-windows\PuzzleGame.pdb
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\obj\Debug\net8.0-windows\PuzzleGame.genruntimeconfig.cache
+D:\Game\PuzzleGame\PuzzleGame\PuzzleGame\obj\Debug\net8.0-windows\ref\PuzzleGame.dll
