@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1e2230">
+  <title>Puzzle Game – Giải đố</title>
+  <style>
+    :root { color-scheme: dark; --bg:#1e2230; --panel:#292f40; --muted:#aab4c8; --blue:#3478dc; --green:#2ea06e; --gold:#dc9628; --gray:#787d8c; }
+    * { box-sizing:border-box }
+    body { margin:0; min-height:100vh; background:radial-gradient(ellipse at top,#30384e,var(--bg) 65%); color:#f7f8fb; font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    button,select,input { font:inherit }
+    .wrap { width:min(920px,100%); margin:auto; padding:24px 16px 48px }
+    header { text-align:center; margin:10px 0 24px }
+    h1 { font-size:clamp(2rem,7vw,3rem); margin:0; letter-spacing:.04em }
+    header p { color:var(--muted); margin:4px 0 }
+    .tabs { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin:22px 0 }
+    button, select, input { border:0; border-radius:10px; padding:10px 14px; color:white; background:#3a4257 }
+    button { cursor:pointer; font-weight:650; transition:filter .15s,transform .15s }
+    button:hover { filter:brightness(1.13) }
+    button:active { transform:scale(.98) }
+    button:focus-visible,select:focus-visible,input:focus-visible { outline:3px solid #9fc2ff; outline-offset:2px }
+    .tab { background:#3a4257 }
+    .tab.active { background:var(--blue) }
+    .panel { display:none; background:rgba(41,47,64,.92); border:1px solid #404960; border-radius:18px; padding:clamp(16px,4vw,28px); box-shadow:0 18px 48px #080a1066 }
+    .panel.active { display:block }
+    h2 { margin:0 0 6px; text-align:center; font-size:1.55rem }
+    .description,.status { text-align:center; color:var(--muted) }
+    .toolbar { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:10px; margin:18px auto }
+    .primary { background:var(--blue) }.success { background:var(--green) }.warning { background:var(--gold); color:#201b10 }.neutral { background:var(--gray) }
+    #sliding-board { --n:3; display:grid; grid-template-columns:repeat(var(--n),1fr); gap:7px; width:min(100%,480px); aspect-ratio:1; margin:20px auto; padding:8px; border-radius:14px; background:#202635 }
+    .tile { display:grid; place-items:center; padding:0; border-radius:9px; background:var(--blue); font-size:clamp(1rem,7vw,2rem); box-shadow:inset 0 -4px #0002 }
+    .tile.correct { background:var(--green) }.tile.empty { visibility:hidden }
+    .status { min-height:28px; font-weight:600 }
+    .riddle-card { max-width:650px; margin:22px auto; text-align:center }
+    .question { min-height:100px; display:grid; place-items:center; font-size:clamp(1.25rem,4vw,1.8rem); font-weight:700; padding:14px }
+    #answer { width:min(100%,440px); background:#f7f8fb; color:#202635; }
+    #feedback { min-height:32px; color:#ffd23c; margin-top:12px; font-weight:600 }
+    #lights-board { display:grid; grid-template-columns:repeat(var(--n),1fr); gap:7px; width:min(100%,460px); aspect-ratio:1; margin:20px auto; padding:8px; border-radius:14px; background:#202635 }
+    .light { padding:0; border-radius:9px; background:#464c5c; min-width:0; min-height:0 }
+    .light.on { background:#ffd23c; box-shadow:0 0 22px #ffd23c66 }
+    .light.hint { color:#1e2230; font-size:clamp(1rem,5vw,2rem); font-weight:900 }
+    footer { text-align:center; color:var(--muted); font-size:.9rem; margin-top:22px }
+    @media(max-width:500px) { .wrap{padding:16px 10px 30px}.tabs{gap:7px}.tab{font-size:.92rem;padding:9px 11px}.panel{border-radius:14px} }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header><h1>🧩 PUZZLE GAME</h1><p>Chọn một trò chơi giải đố và thử sức nhé!</p></header>
+    <nav class="tabs" aria-label="Chọn trò chơi">
+      <button class="tab active" data-game="sliding">Xếp hình số</button>
+      <button class="tab" data-game="riddle">Câu đố Việt Nam</button>
+      <button class="tab" data-game="lights">Lights Out</button>
+    </nav>
+
+    <section class="panel active" id="panel-sliding">
+      <h2>🔢 Xếp hình số</h2><p class="description">Bấm ô nằm cạnh ô trống hoặc dùng phím mũi tên để xếp đúng thứ tự.</p>
+      <div class="toolbar"><label for="sliding-size">Kích thước:</label><select id="sliding-size"><option value="3">3 × 3</option><option value="4">4 × 4</option><option value="5">5 × 5</option></select><button class="primary" id="sliding-new">Ván mới</button></div>
+      <div class="status" id="sliding-info" aria-live="polite"></div><div id="sliding-board" aria-label="Bảng xếp hình"></div>
+    </section>
+
+    <section class="panel" id="panel-riddle">
+      <h2>💡 Câu đố Việt Nam</h2><p class="description">Có 10 câu đố. Có thể trả lời có dấu hoặc không dấu.</p>
+      <div class="riddle-card"><div class="status" id="riddle-progress"></div><div class="question" id="question"></div>
+        <form id="answer-form"><input id="answer" autocomplete="off" placeholder="Nhập câu trả lời…" aria-label="Câu trả lời"><div class="toolbar"><button class="success" type="submit">Trả lời</button><button class="warning" type="button" id="hint-btn">Gợi ý</button><button class="neutral" type="button" id="skip-btn">Bỏ qua</button></div></form>
+        <div id="feedback" aria-live="polite"></div><button class="primary" id="riddle-new" hidden>Chơi lại</button>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-lights">
+      <h2>✨ Lights Out</h2><p class="description">Bấm một ô để đảo trạng thái ô đó và các ô liền kề. Hãy tắt hết đèn!</p>
+      <div class="toolbar"><label for="lights-size">Kích thước:</label><select id="lights-size"><option value="3">3 × 3</option><option value="4">4 × 4</option><option value="5" selected>5 × 5</option></select><button class="primary" id="lights-new">Ván mới</button><button class="neutral" id="lights-reset">Chơi lại</button><button class="warning" id="lights-hint">Gợi ý</button></div>
+      <div class="status" id="lights-info" aria-live="polite"></div><div id="lights-board" aria-label="Bảng Lights Out"></div>
+    </section>
+    <footer>Chơi miễn phí trên máy tính hoặc điện thoại.</footer>
+  </main>
+<script>
+  // Chuyển tab trò chơi
+  document.querySelectorAll('.tab').forEach(button => button.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === button));
+    document.querySelectorAll('.panel').forEach(x => x.classList.toggle('active', x.id === `panel-${button.dataset.game}`));
+  }));
+
+  // Xếp hình số — xáo bằng các nước đi hợp lệ để luôn có lời giải.
+  const slidingBoard = document.getElementById('sliding-board');
+  const slidingSize = document.getElementById('sliding-size');
+  let puzzle = [], puzzleN = 3, blank = 0, moves = 0, seconds = 0, startedAt = 0, clock = null;
+  const solved = () => puzzle.every((v, i) => v === (i === puzzle.length - 1 ? 0 : i + 1));
+  function updateSlidingInfo() {
+    const elapsed = seconds + (startedAt ? Math.floor((Date.now() - startedAt) / 1000) : 0);
+    document.getElementById('sliding-info').textContent = `Số bước: ${moves}　　Thời gian: ${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(elapsed%60).padStart(2,'0')}`;
+  }
+  function drawSliding() {
+    slidingBoard.style.setProperty('--n', puzzleN); slidingBoard.replaceChildren();
+    puzzle.forEach((value, i) => {
+      const b = document.createElement('button'); b.className = 'tile' + (value === 0 ? ' empty' : '');
+      if (value) { b.textContent = value; if (value === i + 1) b.classList.add('correct'); b.setAttribute('aria-label',`Ô ${value}`); b.addEventListener('click',()=>moveTile(i)); }
+      else { b.setAttribute('aria-label','Ô trống'); }
+      slidingBoard.append(b);
+    }); updateSlidingInfo();
+  }
+  function newSliding() {
+    clearInterval(clock); clock=null; puzzleN=Number(slidingSize.value); puzzle=Array.from({length:puzzleN*puzzleN},(_,i)=>(i+1)%(puzzleN*puzzleN)); blank=puzzle.length-1;
+    let previous=-1;
+    for(let k=0;k<200*puzzleN;k++) {
+      const neighbors=[blank-puzzleN,blank+puzzleN,...(blank%puzzleN? [blank-1]:[]),...(blank%puzzleN<puzzleN-1?[blank+1]:[])].filter(x=>x>=0&&x<puzzle.length&&Math.abs(Math.floor(x/puzzleN)-Math.floor(blank/puzzleN))+Math.abs(x%puzzleN-blank%puzzleN)===1&&x!==previous);
+      if(!neighbors.length) continue; const next=neighbors[Math.floor(Math.random()*neighbors.length)]; [puzzle[blank],puzzle[next]]=[puzzle[next],puzzle[blank]]; previous=blank; blank=next;
+    }
+    if(solved()) return newSliding(); moves=0; seconds=0; startedAt=0; drawSliding();
+  }
+  function moveTile(i) {
+    if(Math.abs(Math.floor(i/puzzleN)-Math.floor(blank/puzzleN))+Math.abs(i%puzzleN-blank%puzzleN)!==1) return;
+    if(!startedAt){startedAt=Date.now();clock=setInterval(updateSlidingInfo,1000)}
+    [puzzle[i],puzzle[blank]]=[puzzle[blank],puzzle[i]]; blank=i; moves++; drawSliding();
+    if(solved()){clearInterval(clock);clock=null;startedAt=0;alert(`Chúc mừng! Bạn hoàn thành sau ${moves} bước.`)}
+  }
+  document.getElementById('sliding-new').addEventListener('click',newSliding); slidingSize.addEventListener('change',newSliding);
+  document.addEventListener('keydown',e=>{
+    if(!document.getElementById('panel-sliding').classList.contains('active')||!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
+    e.preventDefault(); const r=Math.floor(blank/puzzleN),c=blank%puzzleN; const offsets={ArrowUp:puzzleN,ArrowDown:-puzzleN,ArrowLeft:1,ArrowRight:-1}; const target=blank+offsets[e.key];
+    if(target>=0&&target<puzzle.length&&Math.abs(Math.floor(target/puzzleN)-r)+Math.abs(target%puzzleN-c)===1)moveTile(target);
+  });
+
+  // Câu đố: chuẩn hóa bỏ dấu tiếng Việt và một số từ mở đầu thường gặp.
+  const riddles=[
+    ['Cái gì càng lau càng ướt?',['khăn','khăn lau','khăn tắm']],
+    ['Cái gì của bạn nhưng người khác lại dùng nhiều hơn bạn?',['tên','họ tên']],
+    ['Cái gì tăng lên mỗi năm nhưng không bao giờ giảm?',['tuổi','tuổi tác','số tuổi']],
+    ['Cái gì đập thì sống, không đập thì chết?',['tim','trái tim','quả tim']],
+    ['Cái gì luôn ở phía trước bạn nhưng bạn không thể nhìn thấy?',['tương lai']],
+    ['Con gì buổi sáng đi bốn chân, buổi trưa đi hai chân, buổi tối đi ba chân?',['con người','người']],
+    ['Cái gì có nhiều răng nhưng không bao giờ ăn?',['lược','cưa','bánh răng']],
+    ['Thứ gì có thể bị phá vỡ mà không cần chạm vào?',['lời hứa','hứa']],
+    ['Cái gì bạn có thể bắt được nhưng không thể ném đi?',['cảm lạnh','cảm','cảm cúm']],
+    ['Cái gì có thể đi vòng quanh thế giới mà vẫn nằm yên ở một góc?',['tem','con tem','cái tem']]
+  ];
+  let round=[], qi=0, score=0, correct=0, usedHint=false, riddleDone=false;
+  function normalize(s){return s.toLocaleLowerCase('vi').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/\s+/g,' ').replace(/^(cai|con|qua|trai|chiec|loi|bi) /,'')}
+  function showRiddle(){
+    const [q]=round[qi]; document.getElementById('riddle-progress').textContent=`Câu ${qi+1}/${round.length}　　Điểm: ${score}`;
+    document.getElementById('question').textContent=q; document.getElementById('feedback').textContent=''; document.getElementById('answer').value=''; usedHint=false;
+    document.getElementById('riddle-new').hidden=true; document.getElementById('answer').disabled=false;
+    document.querySelectorAll('#answer-form button').forEach(b=>b.disabled=false); riddleDone=false;
+  }
+  function newRiddle(){round=[...riddles].sort(()=>Math.random()-.5);qi=0;score=0;correct=0;showRiddle()}
+  function nextRiddle(){qi++;if(qi>=round.length){riddleDone=true;document.getElementById('riddle-progress').textContent=`Hoàn thành! Đúng ${correct}/${round.length} câu · ${score}/${round.length*10} điểm`;document.getElementById('question').textContent='Bạn giỏi lắm!';document.getElementById('answer').disabled=true;document.querySelectorAll('#answer-form button').forEach(b=>b.disabled=true);document.getElementById('riddle-new').hidden=false;return}showRiddle()}
+  document.getElementById('answer-form').addEventListener('submit',e=>{e.preventDefault();if(riddleDone)return;const input=normalize(document.getElementById('answer').value);if(!input){document.getElementById('feedback').textContent='Hãy nhập đáp án nhé!';return}if(round[qi][1].some(a=>normalize(a)===input)){const gained=usedHint?5:10;score+=gained;correct++;document.getElementById('feedback').textContent=`Chính xác! +${gained} điểm`;setTimeout(nextRiddle,650)}else document.getElementById('feedback').textContent='Chưa đúng, thử lại nhé!'});
+  document.getElementById('hint-btn').addEventListener('click',()=>{if(riddleDone)return;usedHint=true;const a=round[qi][1][0];document.getElementById('feedback').textContent=`Gợi ý: ${a.split(' ').length} từ, ${[...a.replace(/\s/g,'')].length} chữ, bắt đầu bằng “${a[0]}”. Trả lời đúng được 5 điểm.`});
+  document.getElementById('skip-btn').addEventListener('click',()=>{if(riddleDone)return;document.getElementById('feedback').textContent=`Đáp án: ${round[qi][1][0]}`;setTimeout(nextRiddle,900)});
+  document.getElementById('riddle-new').addEventListener('click',newRiddle);
+
+  // Lights Out — ván được tạo từ một chuỗi bấm ngẫu nhiên nên luôn giải được.
+  const lightsBoard=document.getElementById('lights-board'), lightsSize=document.getElementById('lights-size');
+  let ln=5,lights=[],initialLights=[],solution=[],playerClicks=[],lightMoves=0,hintCell=-1;
+  function toggleLight(arr,r,c){[[r,c],[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([y,x])=>{if(y>=0&&x>=0&&y<ln&&x<ln)arr[y*ln+x]=!arr[y*ln+x]})}
+  function drawLights(){lightsBoard.style.setProperty('--n',ln);lightsBoard.replaceChildren();lights.forEach((on,i)=>{const b=document.createElement('button');b.className='light'+(on?' on':'')+(hintCell===i?' hint':'');b.setAttribute('aria-label',`Ô ${Math.floor(i/ln)+1}, ${i%ln+1}, ${on?'sáng':'tắt'}`);if(hintCell===i)b.textContent='?';b.addEventListener('click',()=>{toggleLight(lights,Math.floor(i/ln),i%ln);playerClicks[i]=!playerClicks[i];lightMoves++;hintCell=-1;drawLights();if(lights.every(x=>!x))setTimeout(()=>alert(`Bạn đã tắt hết đèn sau ${lightMoves} lần bấm!`),50)});lightsBoard.append(b)});document.getElementById('lights-info').textContent=`Số lần bấm: ${lightMoves}　　Đèn đang sáng: ${lights.filter(Boolean).length}`}
+  function newLights(){ln=Number(lightsSize.value);do{lights=Array(ln*ln).fill(false);solution=Array(ln*ln).fill(false);for(let i=0;i<ln*ln;i++){if(Math.random()<.48){const r=Math.floor(i/ln),c=i%ln;toggleLight(lights,r,c);solution[i]=!solution[i]}}}while(lights.every(x=>!x));initialLights=[...lights];playerClicks=Array(ln*ln).fill(false);lightMoves=0;hintCell=-1;drawLights()}
+  document.getElementById('lights-new').addEventListener('click',newLights);lightsSize.addEventListener('change',newLights);
+  document.getElementById('lights-reset').addEventListener('click',()=>{lights=[...initialLights];playerClicks=Array(ln*ln).fill(false);lightMoves=0;hintCell=-1;drawLights()});
+  document.getElementById('lights-hint').addEventListener('click',()=>{hintCell=solution.findIndex((v,i)=>v!==playerClicks[i]);drawLights()});
+
+  newSliding();newRiddle();newLights();
+</script>
+</body>
+</html>
